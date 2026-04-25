@@ -14,6 +14,17 @@ class TaskController extends GetxController {
     tasks.value = taskBox.values.toList();
   }
 
+  void addTaskWithPriority(String title, String priority) {
+    final task = TaskModel(
+      title: title,
+      isDone: false,
+      priority: priority,
+    );
+
+    taskBox.add(task);
+    tasks.add(task);
+  }
+
   void addTask(String title) {
     final task = TaskModel(title: title);
     taskBox.add(task);

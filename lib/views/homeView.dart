@@ -19,7 +19,7 @@ class _HomeViewState extends State<HomeView> {
   final List<Widget> _pages = [
     DashboardView(),
     TasksView(),
-    ScheduleView(),
+    RoutineView(),
     MoneyView(),
   ];
 

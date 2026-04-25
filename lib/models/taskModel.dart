@@ -10,5 +10,13 @@ class TaskModel extends HiveObject {
   @HiveField(1)
   bool isDone;
 
-  TaskModel({required this.title, this.isDone = false});
+  /// 🔥 NEW FIELD (must use new index)
+  @HiveField(2)
+  String priority; // "low", "medium", "high"
+
+  TaskModel({
+    required this.title,
+    this.isDone = false,
+    this.priority = "medium", // ✅ default value (important)
+  });
 }

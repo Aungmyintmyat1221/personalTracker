@@ -14,6 +14,21 @@ class TransactionController extends GetxController {
     transactions.value = transactionBox.values.toList();
   }
 
+  double getBalance() {
+    double income = 0;
+    double expense = 0;
+
+    for (var tx in transactions) {
+      if (tx.type == "income") {
+        income += tx.amount;
+      } else {
+        expense += tx.amount;
+      }
+    }
+
+    return income - expense;
+  }
+
   void addTransaction(String type, double amount, String note) {
     final tx = TransactionModel(
       type: type,

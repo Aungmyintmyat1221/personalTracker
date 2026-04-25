@@ -1,21 +1,41 @@
 import 'package:hive/hive.dart';
-
 part 'routineModel.g.dart';
 
 @HiveType(typeId: 1)
 class RoutineModel extends HiveObject {
+
   @HiveField(0)
-  String title;
+  final String id;
 
   @HiveField(1)
-  DateTime time;
+  final String title;
 
   @HiveField(2)
-  int reminderMinutesBefore; // e.g. 15 = notify 15 min before
+  final int hour;
+
+  @HiveField(3)
+  final int minute;
+
+  @HiveField(4)
+  bool isDoneToday;
+
+  @HiveField(5)
+  int streak;
+
+  @HiveField(6)
+  DateTime? lastCompletedDate;
+
+  @HiveField(7)
+  int priority; // 1 low, 2 medium, 3 high
 
   RoutineModel({
+    required this.id,
     required this.title,
-    required this.time,
-    this.reminderMinutesBefore = 10,
+    required this.hour,
+    required this.minute,
+    this.isDoneToday = false,
+    this.streak = 0,
+    this.lastCompletedDate,
+    this.priority = 2,
   });
 }
