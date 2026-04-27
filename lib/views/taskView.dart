@@ -112,9 +112,36 @@ class TasksView extends StatelessWidget {
                             /// 🗑 DELETE
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                await controller.taskBox.delete(task.key);
-                                controller.tasks.remove(task);
+                              onPressed: () {
+                                Get.dialog(
+                                  AlertDialog(
+                                    title: const Text("Confirm Delete"),
+                                    content: const Text("This action cannot be undone. Delete this task?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Get.back(),
+                                        child: const Text("Cancel"),
+                                      ),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                        onPressed: () async {
+                                          await controller.taskBox.delete(task.key);
+                                          controller.tasks.remove(task);
+                                          Get.back();
+                                        },
+                                        child: const Text("Delete",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        )
+
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               },
                             ),
                           ],

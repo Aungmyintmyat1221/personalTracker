@@ -104,7 +104,35 @@ class RoutineView extends StatelessWidget {
                   /// DELETE
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => controller.deleteRoutine(r),
+                    onPressed: () {
+                      Get.dialog(
+                        AlertDialog(
+                          title: const Text("Confirm Delete"),
+                          content: const Text("This routine will be permanently deleted."),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(),
+                              child: const Text("Cancel"),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              onPressed: () async {
+                                 controller.deleteRoutine(r);
+                                Get.back();
+                              },
+                              child: const Text("Delete",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                               )
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   )
                 ],
               ),

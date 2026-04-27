@@ -289,6 +289,8 @@ class DashboardView extends StatelessWidget {
 
 
             Text("🔥 Best Streak: $bestStreak days"),
+            const SizedBox(height: 10),
+
             Text("⚡ Total Discipline: $totalStreak"),
 
           ],

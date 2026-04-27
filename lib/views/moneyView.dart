@@ -22,11 +22,7 @@ class MoneyView extends StatelessWidget {
     final amount = double.tryParse(parts.last) ?? 0;
     final title = parts.sublist(0, parts.length - 1).join(' ');
 
-    controller.addTransaction(
-      type.value,
-      amount,
-      title,
-    );
+    controller.addTransaction(type.value, amount, title);
 
     inputController.clear();
     Get.back();
@@ -45,7 +41,6 @@ class MoneyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
             /// 🧠 TITLE INPUT
             TextField(
               controller: inputController,
@@ -83,41 +78,43 @@ class MoneyView extends StatelessWidget {
             const SizedBox(height: 16),
 
             /// 🔥 TYPE TOGGLE
-            Obx(() => Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => type.value = "income",
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: type.value == "income"
-                            ? Colors.green
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
+            Obx(
+              () => Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => type.value = "income",
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: type.value == "income"
+                              ? Colors.green
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(child: Text("Income")),
                       ),
-                      child: const Center(child: Text("Income")),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => type.value = "expense",
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: type.value == "expense"
-                            ? Colors.red
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => type.value = "expense",
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: type.value == "expense"
+                              ? Colors.red
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(child: Text("Expense")),
                       ),
-                      child: const Center(child: Text("Expense")),
                     ),
                   ),
-                ),
-              ],
-            )),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 16),
 
@@ -131,11 +128,7 @@ class MoneyView extends StatelessWidget {
                   final amount = double.tryParse(amountController.text) ?? 0;
 
                   if (title.isNotEmpty && amount > 0) {
-                    controller.addTransaction(
-                      type.value,
-                      amount,
-                      title,
-                    );
+                    controller.addTransaction(type.value, amount, title);
 
                     inputController.clear();
                     amountController.clear();
@@ -157,6 +150,7 @@ class MoneyView extends StatelessWidget {
       ),
     );
   }
+
   Widget _amountChip(int value) {
     return GestureDetector(
       onTap: () {
@@ -176,10 +170,10 @@ class MoneyView extends StatelessWidget {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       /// 🔥 APP BAR (PRO STYLE)
       appBar: AppBar(
         title: const Text("Money Flow"),
@@ -197,7 +191,6 @@ class MoneyView extends StatelessWidget {
 
       body: Column(
         children: [
-
           /// 💰 BALANCE CARD
           Obx(() {
             double total = 0;
@@ -225,98 +218,148 @@ class MoneyView extends StatelessWidget {
 
           /// 📋 LIST
           Expanded(
-            child: Obx(() => ListView.builder(
-              itemCount: controller.transactions.length,
-              itemBuilder: (context, index) {
-                final txn = controller.transactions[index];
+            child: Obx(
+              () => ListView.builder(
+                itemCount: controller.transactions.length,
+                itemBuilder: (context, index) {
+                  final txn = controller.transactions[index];
+                  final isIncome = txn.type == "income";
 
-                final isIncome = txn.type == "income";
+                  return Dismissible(
+                    key: Key(txn.key.toString()),
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    direction: DismissDirection.endToStart,
 
-                    /// 🔥 subtle left border indicator
-                    border: Border(
-                      left: BorderSide(
-                        color: isIncome ? Colors.green : Colors.red,
-                        width: 4,
+                    // 🔴 Swipe background
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.delete, color: Colors.white),
                     ),
 
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-
-                  child: Row(
-                    children: [
-
-                      /// 🔥 ICON INDICATOR
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isIncome
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                          color: isIncome ? Colors.green : Colors.red,
-                          size: 20,
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      /// 🧠 TITLE + TYPE
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              txn.note,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                    // ⚠️ Confirm delete
+                    confirmDismiss: (direction) async {
+                      return await Get.dialog<bool>(
+                        AlertDialog(
+                          title: const Text("Delete Transaction"),
+                          content: const Text(
+                            "Are you sure you want to delete this transaction?",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(result: false),
+                              child: const Text("Cancel"),
                             ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              isIncome ? "Income" : "Expense",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
                               ),
+                              onPressed: () => Get.back(result: true),
+                              child: const Text("Delete"),
                             ),
                           ],
                         ),
+                      );
+                    },
+
+                    // 🧠 Actual delete logic
+                    onDismissed: (direction) {
+                      controller.deleteTransaction(txn);
+                    },
+
+                    // 🎨 Your existing UI
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border(
+                          left: BorderSide(
+                            color: isIncome ? Colors.green : Colors.red,
+                            width: 4,
+                          ),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
 
-                      /// 💰 AMOUNT
-                      Text(
-                        "${isIncome ? '+' : '-'}${txn.amount.toStringAsFixed(0)}",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isIncome ? Colors.green : Colors.red,
-                        ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isIncome
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isIncome
+                                  ? Icons.arrow_downward
+                                  : Icons.arrow_upward,
+                              color: isIncome ? Colors.green : Colors.red,
+                              size: 20,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  txn.note,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isIncome ? "Income" : "Expense",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          Text(
+                            "${isIncome ? '+' : '-'}${txn.amount.toStringAsFixed(0)}",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+
+                              color: isIncome ? Colors.green : Colors.red,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            )),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),

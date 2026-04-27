@@ -1,6 +1,9 @@
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
+import '../main.dart';
 import '../models/routineModel.dart';
 
 // Use the same plugin instance everywhere
@@ -32,7 +35,7 @@ class RoutineController extends GetxController {
 
       // 🔥 Only schedule future routines today
       if (routineTime.isAfter(now) && !routine.isDoneToday) {
-        _scheduleNotification(routine);
+        scheduleNotification(routine);
       }
     }
   }
@@ -61,7 +64,7 @@ class RoutineController extends GetxController {
     routineBox.add(routine);
     routines.add(routine);
 
-    _scheduleNotification(routine);
+    scheduleNotification(routine);
   }
 
 
@@ -173,10 +176,11 @@ class RoutineController extends GetxController {
     return upcoming.first;
   }
 
-  Future<void> _scheduleNotification(RoutineModel routine) async {
-    final now = DateTime.now();
+  Future<void> scheduleNotification(RoutineModel routine) async {
+    final now = tz.TZDateTime.now(tz.local);
 
-    final scheduledTime = DateTime(
+    final scheduledDate = tz.TZDateTime(
+      tz.local,
       now.year,
       now.month,
       now.day,
@@ -184,46 +188,26 @@ class RoutineController extends GetxController {
       routine.minute,
     );
 
-    // final now = DateTime.now();
-    final delay = scheduledTime.difference(now);
-
-    if (delay.isNegative) {
-      // If time already passed, show immediately
-      await notifications.show(
-        routine.key as int,
-        'Upcoming Routine',
-        routine.title,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'routine_channel',
-            'Routine Alerts',
-            channelDescription: 'Routine reminders',
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      routine.key as int,
+      'Upcoming Routine',
+      routine.title,
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'routine_channel',
+          'Routine Alerts',
+          channelDescription: 'Routine reminders',
+          importance: Importance.max,
+          priority: Priority.high,
         ),
-      );
-      print('⚡ Routine ${routine.title} notification shown immediately');
-    } else {
-      // Delay the notification
-      Future.delayed(delay, () async {
-        await notifications.show(
-          routine.key as int,
-          'Upcoming Routine',
-          routine.title,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              'routine_channel',
-              'Routine Alerts',
-              channelDescription: 'Routine reminders',
-              importance: Importance.high,
-              priority: Priority.high,
-            ),
-          ),
-        );
-        print('✅ Routine ${routine.title} notification fired at $scheduledTime');
-      });
-      print('🕒 Routine ${routine.title} scheduled at $scheduledTime');
-    }
+      ),
+
+      // 🔥 IMPORTANT (this makes it work when app is closed)
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+
+    print('🕒 Scheduled at $scheduledDate');
   }
 }

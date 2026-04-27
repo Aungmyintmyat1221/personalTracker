@@ -40,6 +40,18 @@ class TransactionController extends GetxController {
     transactions.add(tx);
   }
 
+
+  void deleteTransaction(TransactionModel routine) async {
+    final index = transactions.indexOf(routine);
+
+    if (index != -1) {
+      await transactionBox.deleteAt(index);
+      transactions.removeAt(index);
+    }
+
+
+  }
+
   TransactionModel? getLastTransaction() {
     if (transactions.isEmpty) return null;
     transactions.sort((a, b) => b.date.compareTo(a.date));
