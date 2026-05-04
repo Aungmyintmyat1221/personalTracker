@@ -6,7 +6,7 @@ class NotificationService {
   FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('app_icon');
 
     const settings = InitializationSettings(android: android);
 
@@ -28,13 +28,12 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'routine_channel',
           'Routine Notifications',
+          icon: 'app_icon',
           importance: Importance.max,
           priority: Priority.high,
         ),
       ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-      UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 }

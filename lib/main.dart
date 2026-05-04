@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:tracker/views/homeView.dart';
+import 'package:tracker/theme/app_theme.dart';
 import 'models/routineModel.dart';
 import 'models/taskModel.dart';
 import 'models/transactionModel.dart';
@@ -34,10 +35,13 @@ void main() async {
   await Hive.openBox<TaskModel>('tasks');
   await Hive.openBox<RoutineModel>('routines');
   await Hive.openBox<TransactionModel>('transactions');
+  await Hive.openBox('checklist');
+  await Hive.openBox('routine_history');
+  await Hive.openBox('app_meta');
 
   // --- Local Notifications Init ---
   const AndroidInitializationSettings androidInit =
-  AndroidInitializationSettings('@mipmap/ic_launcher');
+  AndroidInitializationSettings('app_icon');
   final InitializationSettings initSettings =
   InitializationSettings(android: androidInit);
 
@@ -48,6 +52,12 @@ void main() async {
       .resolvePlatformSpecificImplementation<
       AndroidFlutterLocalNotificationsPlugin>()
       ?.requestNotificationsPermission();
+  final androidPlugin = flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>();
+  await androidPlugin?.requestNotificationsPermission();
+  await androidPlugin?.requestExactAlarmsPermission(); //
+
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
@@ -67,10 +77,7 @@ class SelfDevApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Self Development App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
       home: HomeView(),
     );
   }

@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
 import '../models/routineModel.dart';
-import '../models/testModel.dart';
+import '../models/taskModel.dart';
 import '../models/transactionModel.dart';
-import 'MoneyController.dart';
-import 'ScheduleController.dart';
-import 'TasksController.dart';
+import 'RoutineController.dart';
+import 'TaskController.dart';
+import 'TransactionController.dart';
 
 class DashboardController extends GetxController {
   final TaskController taskController = Get.find();

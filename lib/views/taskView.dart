@@ -2,284 +2,221 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/TaskController.dart';
+import '../theme/app_theme.dart';
 
 class TasksView extends StatelessWidget {
+  TasksView({super.key});
+
   final TaskController controller = Get.put(TaskController());
   final TextEditingController taskInput = TextEditingController();
-
-  /// 🔥 Priority state
-  final RxString selectedPriority = "medium".obs;
-
-  TasksView({super.key});
+  final RxString selectedPriority = 'medium'.obs;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
-
-      appBar: AppBar(
-        title: const Text(
-          "Tasks",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: const Color(0xFF4F46E5), // modern indigo
-        foregroundColor: Colors.white,
-      ),
-
-      /// 🔥 Floating Add Button
+      appBar: AppBar(title: const Text('Tasks')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(context),
+        onPressed: () => _showAddTaskSheet(context),
         child: const Icon(Icons.add),
       ),
+      body: SafeArea(
+        child: Obx(() {
+          final sortedTasks = [...controller.tasks];
+          sortedTasks.sort((a, b) {
+            if (a.isDone && !b.isDone) return 1;
+            if (!a.isDone && b.isDone) return -1;
+            return a.priority.compareTo(b.priority);
+          });
 
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFF1F5F9),
-              Color(0xFFE8EEF7),
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 100),
+            children: [
+              _summaryCard(),
+              const SizedBox(height: 16),
+              if (sortedTasks.isEmpty)
+                _emptyState()
+              else
+                ...sortedTasks.map(_taskTile),
             ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _summaryCard() {
+    final total = controller.tasks.length;
+    final done = controller.tasks.where((task) => task.isDone).length;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: premiumCard(),
+      child: Row(
+        children: [
+          const Icon(Icons.task_alt, color: AppTheme.primary),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Task Progress',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: total == 0 ? 0 : done / total,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '$done/$total',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _taskTile(task) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: premiumCard(),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        leading: Checkbox(
+          value: task.isDone,
+          onChanged: (_) => controller.toggleDone(task),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        title: Text(
+          task.title,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            decoration: task.isDone ? TextDecoration.lineThrough : null,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-
-              /// 🔥 TASK LIST
-              Expanded(
-                child: Obx(() {
-                  if (controller.tasks.isEmpty) {
-                    return const Center(child: Text("No tasks yet"));
-                  }
-
-                  final sortedTasks = [...controller.tasks];
-                  sortedTasks.sort((a, b) {
-                    if (a.isDone && !b.isDone) return 1;
-                    if (!a.isDone && b.isDone) return -1;
-                    return 0;
-                  });
-
-                  return ListView.builder(
-
-                    itemCount: sortedTasks.length,
-                    itemBuilder: (context, index) {
-                      final task = sortedTasks[index];
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-
-                            /// ✅ CHECKBOX
-                            Checkbox(
-                              value: task.isDone,
-                              onChanged: (_) => controller.toggleDone(task),
-                            ),
-
-                            /// 🧠 TASK INFO
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    task.title,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      decoration: task.isDone
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-
-                                  /// 🔥 PRIORITY BADGE
-                                  _priorityChip(task.priority),
-                                ],
-                              ),
-                            ),
-
-                            /// 🗑 DELETE
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                Get.dialog(
-                                  AlertDialog(
-                                    title: const Text("Confirm Delete"),
-                                    content: const Text("This action cannot be undone. Delete this task?"),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Get.back(),
-                                        child: const Text("Cancel"),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                        ),
-                                        onPressed: () async {
-                                          await controller.taskBox.delete(task.key);
-                                          controller.tasks.remove(task);
-                                          Get.back();
-                                        },
-                                        child: const Text("Delete",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        )
-
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                }),
-              ),
-            ],
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: _priorityChip(task.priority),
           ),
+        ),
+        trailing: IconButton(
+          tooltip: 'Delete',
+          onPressed: () async {
+            await controller.taskBox.delete(task.key);
+            controller.tasks.remove(task);
+          },
+          icon: const Icon(Icons.delete_outline, color: AppTheme.rose),
         ),
       ),
     );
   }
 
-  void _showAddTaskDialog(BuildContext context) {
+  Widget _emptyState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: premiumCard(),
+      child: const Column(
+        children: [
+          Icon(Icons.add_task, size: 42),
+          SizedBox(height: 10),
+          Text('No tasks yet', style: TextStyle(fontWeight: FontWeight.w900)),
+          SizedBox(height: 4),
+          Text('Add your first task to start tracking.', style: TextStyle(color: AppTheme.muted)),
+        ],
+      ),
+    );
+  }
+
+  void _showAddTaskSheet(BuildContext context) {
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-
-            /// 📝 INPUT
-            TextField(
-              controller: taskInput,
-              decoration: const InputDecoration(
-                hintText: "Enter task...",
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// 🔥 PRIORITY SELECTOR
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _priorityOption("low"),
-                    _priorityOption("medium"),
-                    _priorityOption("high"),
-                  ],
+      SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: taskInput,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Task name',
+                  prefixIcon: Icon(Icons.edit_note),
                 ),
-
-            const SizedBox(height: 16),
-
-            /// ➕ ADD BUTTON
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (taskInput.text.isNotEmpty) {
-                    controller.addTaskWithPriority(
-                      taskInput.text,
-                      selectedPriority.value,
-                    );
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  _priorityOption('low'),
+                  const SizedBox(width: 8),
+                  _priorityOption('medium'),
+                  const SizedBox(width: 8),
+                  _priorityOption('high'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  onPressed: () {
+                    if (taskInput.text.trim().isEmpty) return;
+                    controller.addTaskWithPriority(taskInput.text.trim(), selectedPriority.value);
                     taskInput.clear();
                     Get.back();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5), // modern indigo
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  "Add Task",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+                  },
+                  child: const Text('Add Task'),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+      isScrollControlled: true,
     );
   }
 
   Widget _priorityChip(String priority) {
-    Color color;
-
-    switch (priority) {
-      case "high":
-        color = Colors.red;
-        break;
-      case "medium":
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.green;
-    }
+    final color = switch (priority) {
+      'high' => AppTheme.rose,
+      'medium' => AppTheme.amber,
+      _ => AppTheme.teal,
+    };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         priority.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 12),
+        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w900),
       ),
     );
   }
 
   Widget _priorityOption(String value) {
-    return Obx(() {
-      final isSelected = selectedPriority.value == value;
-
-      return GestureDetector(
-        onTap: () => selectedPriority.value = value,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.blue : Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            value.toUpperCase(),
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      );
-    });
+    return Expanded(
+      child: Obx(() {
+        final isSelected = selectedPriority.value == value;
+        return ChoiceChip(
+          selected: isSelected,
+          label: Center(child: Text(value.toUpperCase())),
+          onSelected: (_) => selectedPriority.value = value,
+        );
+      }),
+    );
   }
 }

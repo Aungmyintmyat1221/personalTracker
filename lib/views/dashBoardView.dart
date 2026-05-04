@@ -4,314 +4,213 @@ import 'package:get/get.dart';
 import '../controllers/RoutineController.dart';
 import '../controllers/TaskController.dart';
 import '../controllers/TransactionController.dart';
+import '../theme/app_theme.dart';
 
 class DashboardView extends StatelessWidget {
+  DashboardView({super.key});
+
   final TaskController tasksController = Get.put(TaskController());
-  final RoutineController scheduleController = Get.put(RoutineController());
+  final RoutineController routineController = Get.put(RoutineController());
   final TransactionController moneyController = Get.put(TransactionController());
 
-  DashboardView({super.key});
-  static const primaryColor = Color(0xFF4A90E2); // blue
-  static const bgColor = Color(0xFFF5F7FB);      // light background
-  static const cardColor = Colors.white;
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: const Color(0xFF4F46E5), // modern indigo
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: const Color(0xFFF5F7FB),
+      appBar: AppBar(title: const Text('Overview')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-
-              /// 👋 HEADER
-              _buildHeader(),
-
-              const SizedBox(height: 16),
-
-              /// 🔥 GRID CARDS
-              GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  mainAxisExtent: 140,
-                ),
-                children: [
-                  _buildNextRoutine(),
-                  _buildBalance(),
-                  _buildTaskSummary(),
-                  _buildStreakCard(),
-                ],
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 100),
+          children: [
+            _hero(),
+            const SizedBox(height: 16),
+            GridView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                mainAxisExtent: 146,
               ),
+              children: [
+                _nextRoutineCard(),
+                _balanceCard(),
+                _taskCard(),
+                _streakCard(),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Today Tasks',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 10),
+            _taskPreview(),
+          ],
+        ),
+      ),
+    );
+  }
 
-              const SizedBox(height: 20),
-
-              /// 📋 TASK LIST TITLE
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Your Tasks",
+  Widget _hero() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: premiumCard(color: AppTheme.ink),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Personal Tracker',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 10),
-
-              /// 📋 TASK LIST
-              Obx(() {
-                final tasks = tasksController.tasks;
-
-                if (tasks.isEmpty) {
-                  return const Text("No tasks yet");
-                }
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    final t = tasks[index];
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-
-                          /// ✔ CHECKBOX
-                          Checkbox(
-                            value: t.isDone,
-                            onChanged: (_) {
-                              tasksController.toggleDone(t);
-                            },
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          /// 🧠 TITLE
-                          Expanded(
-                            child: Text(
-                              t.title,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                decoration: t.isDone
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
-                            ),
-                          ),
-
-                          /// 🗑 DELETE
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              await tasksController.taskBox.delete(t.key);
-                              tasksController.tasks.remove(t);
-                              // tasksController.deleteTask(t);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              }),
-            ],
+                SizedBox(height: 8),
+                Text(
+                  'Focus, routines, money, and progress in one place.',
+                  style: TextStyle(color: Color(0xFFD1D5DB), height: 1.3),
+                ),
+              ],
+            ),
           ),
-        ),
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.insights, color: Colors.white),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildNextRoutine() {
+  Widget _nextRoutineCard() {
     return Obx(() {
-      final r = scheduleController.getNextRoutine();
-
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.schedule, color: Colors.blue),
-            const SizedBox(height: 10),
-
-            const Text("Next Routine"),
-            const SizedBox(height: 6),
-
-            Text(
-              r?.title ?? "No routine",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-
-            const Spacer(),
-
-            Text(
-              r != null
-                  ? "${r.hour.toString().padLeft(2, '0')}:${r.minute.toString().padLeft(2, '0')}"
-                  : "",
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
+      final routine = routineController.getNextRoutine();
+      return _metricCard(
+        icon: Icons.schedule,
+        iconColor: AppTheme.primary,
+        label: 'Next Routine',
+        value: routine?.title ?? 'No routine',
+        detail: routine == null
+            ? 'Add one'
+            : '${routine.hour.toString().padLeft(2, '0')}:${routine.minute.toString().padLeft(2, '0')}',
       );
     });
   }
-  Widget _buildBalance() {
+
+  Widget _balanceCard() {
     return Obx(() {
       final balance = moneyController.getBalance();
+      return _metricCard(
+        icon: Icons.account_balance_wallet,
+        iconColor: AppTheme.teal,
+        label: 'Balance',
+        value: balance.toStringAsFixed(0),
+        detail: 'Current total',
+      );
+    });
+  }
 
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF4F46E5), Color(0xFF7C83FD)],
+  Widget _taskCard() {
+    return Obx(() {
+      final total = tasksController.tasks.length;
+      final done = tasksController.tasks.where((task) => task.isDone).length;
+      return _metricCard(
+        icon: Icons.task_alt,
+        iconColor: AppTheme.amber,
+        label: 'Tasks',
+        value: '$done / $total',
+        detail: 'Completed',
+      );
+    });
+  }
+
+  Widget _streakCard() {
+    return Obx(() {
+      final best = routineController.routines.fold<int>(
+        0,
+        (max, routine) => routine.streak > max ? routine.streak : max,
+      );
+      return _metricCard(
+        icon: Icons.local_fire_department,
+        iconColor: AppTheme.rose,
+        label: 'Best Streak',
+        value: '$best days',
+        detail: 'Keep it moving',
+      );
+    });
+  }
+
+  Widget _metricCard({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    required String detail,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: premiumCard(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor),
+          const Spacer(),
+          Text(label, style: const TextStyle(color: AppTheme.muted)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
           ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.account_balance_wallet, color: Colors.white),
-
-            const SizedBox(height: 10),
-
-            const Text(
-              "Balance",
-              style: TextStyle(color: Colors.white70),
-            ),
-
-            const SizedBox(height: 6),
-
-            Text(
-              balance.toStringAsFixed(0),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-  Widget _buildTaskSummary() {
-    return Obx(() {
-      final tasks = tasksController.tasks;
-
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green),
-
-            const SizedBox(height: 10),
-
-            const Text("Tasks"),
-
-            const SizedBox(height: 6),
-
-            Text(
-              "Total: ${tasks.length}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-
-            Text(
-              "Done: ${tasks.where((t) => t.isDone).length}",
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-  Widget _buildStreakCard() {
-    return Obx(() {
-      final totalStreak = scheduleController.routines.fold<int>(
-        0,
-            (sum, r) => sum + r.streak,
-      );
-
-      final bestStreak = scheduleController.routines.fold<int>(
-        0,
-            (max, r) => r.streak > max ? r.streak : max,
-      );
-
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.orange.shade50,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-
-            const SizedBox(height: 10),
-
-
-
-
-
-            Text("🔥 Best Streak: $bestStreak days"),
-            const SizedBox(height: 10),
-
-            Text("⚡ Total Discipline: $totalStreak"),
-
-          ],
-        ),
-      );
-    });
-  }
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Good Morning 👋",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          DateTime.now().toString(),
-          style: const TextStyle(color: Colors.grey),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(detail, style: const TextStyle(color: AppTheme.muted, fontSize: 12)),
+        ],
+      ),
     );
+  }
+
+  Widget _taskPreview() {
+    return Obx(() {
+      final tasks = tasksController.tasks.take(4).toList();
+      if (tasks.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: premiumCard(),
+          child: const Text('No tasks yet', style: TextStyle(color: AppTheme.muted)),
+        );
+      }
+
+      return Column(
+        children: tasks.map((task) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: premiumCard(),
+            child: CheckboxListTile(
+              value: task.isDone,
+              onChanged: (_) => tasksController.toggleDone(task),
+              title: Text(
+                task.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  decoration: task.isDone ? TextDecoration.lineThrough : null,
+                ),
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 }
