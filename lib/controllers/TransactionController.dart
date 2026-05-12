@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
 import '../models/transactionModel.dart';
+import '../service/android_widget_service.dart';
 
 class TransactionController extends GetxController {
   var transactions = <TransactionModel>[].obs;
@@ -12,6 +13,7 @@ class TransactionController extends GetxController {
     super.onInit();
     transactionBox = Hive.box<TransactionModel>('transactions');
     transactions.value = transactionBox.values.toList();
+    AndroidWidgetService.updateTrackerWidget();
   }
 
   double getBalance() {
@@ -38,8 +40,8 @@ class TransactionController extends GetxController {
     );
     transactionBox.add(tx);
     transactions.add(tx);
+    AndroidWidgetService.updateTrackerWidget();
   }
-
 
   void deleteTransaction(TransactionModel routine) async {
     final index = transactions.indexOf(routine);
@@ -47,9 +49,8 @@ class TransactionController extends GetxController {
     if (index != -1) {
       await transactionBox.deleteAt(index);
       transactions.removeAt(index);
+      AndroidWidgetService.updateTrackerWidget();
     }
-
-
   }
 
   TransactionModel? getLastTransaction() {
@@ -58,4 +59,3 @@ class TransactionController extends GetxController {
     return transactions.first;
   }
 }
-

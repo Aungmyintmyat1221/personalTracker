@@ -24,25 +24,12 @@ class ChecklistItem {
 class ChecklistController extends GetxController {
   final items = <ChecklistItem>[].obs;
   late Box checklistBox;
-  late Box metaBox;
 
   @override
   void onInit() {
     super.onInit();
     checklistBox = Hive.box('checklist');
-    metaBox = Hive.box('app_meta');
-    resetForNewDay();
     loadItems();
-  }
-
-  Future<void> resetForNewDay() async {
-    final today = DateTime.now();
-    final todayKey = '${today.year}-${today.month}-${today.day}';
-    final lastReset = metaBox.get('checklist_reset_day') as String?;
-    if (lastReset == todayKey) return;
-
-    await checklistBox.clear();
-    await metaBox.put('checklist_reset_day', todayKey);
   }
 
   void loadItems() {

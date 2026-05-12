@@ -38,9 +38,14 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   flutter_local_notifications: ^19.4.2
+  flutter_secure_storage: ^9.2.4
+  http: ^1.5.0
   timezone: ^0.10.1
   intl: ^0.20.2
+  pdf: ^3.11.1
+  printing: ^5.13.4
   permission_handler: ^12.0.1
+  xml: ^6.6.1
   android_alarm_manager_plus: ^5.0.0
   flutter_launcher_icons: ^0.14.4
 
@@ -69,6 +74,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/img.png
+    - assets/fonts/
+
+  fonts:
+    - family: Pyidaungsu
+      fonts:
+        - asset: assets/fonts/Pyidaungsu-Regular.ttf
+        - asset: assets/fonts/Pyidaungsu-Bold.ttf
+          weight: 700
 
 
   # To add assets to your application, add an assets section, like this:

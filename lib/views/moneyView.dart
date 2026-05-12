@@ -1,7 +1,12 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../controllers/TransactionController.dart';
+import '../models/transactionModel.dart';
+import '../service/monthly_report_service.dart';
 import '../theme/app_theme.dart';
 
 class MoneyView extends StatelessWidget {
@@ -11,11 +16,24 @@ class MoneyView extends StatelessWidget {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
   final RxString type = 'income'.obs;
+  final Rx<DateTime> reportMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+  ).obs;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Money')),
+      appBar: AppBar(
+        title: const Text('Money'),
+        actions: [
+          IconButton(
+            tooltip: 'Export monthly report',
+            onPressed: () => _exportMonthlyReport(),
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddSheet(context),
         child: const Icon(Icons.add),
@@ -37,6 +55,8 @@ class MoneyView extends StatelessWidget {
               const SizedBox(height: 16),
               _moneyChart(),
               const SizedBox(height: 16),
+              _monthlyReportCard(context),
+              const SizedBox(height: 16),
               if (controller.transactions.isEmpty)
                 _emptyState()
               else
@@ -55,7 +75,10 @@ class MoneyView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Total Balance', style: TextStyle(color: Color(0xFFD1D5DB))),
+          const Text(
+            'Total Balance',
+            style: TextStyle(color: Color(0xFFD1D5DB)),
+          ),
           const SizedBox(height: 6),
           Text(
             balance.toStringAsFixed(0),
@@ -88,7 +111,10 @@ class MoneyView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 12),
+          ),
           const SizedBox(height: 4),
           Text(
             amount.toStringAsFixed(0),
@@ -123,7 +149,10 @@ class MoneyView extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         decoration: premiumCard(),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 8,
+          ),
           leading: CircleAvatar(
             backgroundColor: color.withValues(alpha: 0.10),
             child: Icon(
@@ -132,7 +161,10 @@ class MoneyView extends StatelessWidget {
               size: 20,
             ),
           ),
-          title: Text(txn.note, style: const TextStyle(fontWeight: FontWeight.w900)),
+          title: Text(
+            txn.note,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
           subtitle: Text(isIncome ? 'Income' : 'Expense'),
           trailing: Text(
             '${isIncome ? '+' : '-'}${txn.amount.toStringAsFixed(0)}',
@@ -175,6 +207,112 @@ class MoneyView extends StatelessWidget {
     );
   }
 
+  Widget _monthlyReportCard(BuildContext context) {
+    return Obx(() {
+      final month = reportMonth.value;
+      final transactions = _transactionsForMonth(month);
+      final income = transactions
+          .where((tx) => tx.type == 'income')
+          .fold<double>(0, (sum, tx) => sum + tx.amount);
+      final expense = transactions
+          .where((tx) => tx.type == 'expense')
+          .fold<double>(0, (sum, tx) => sum + tx.amount);
+
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: premiumCard(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Monthly Report',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Choose month',
+                  onPressed: () => _pickReportMonth(context),
+                  icon: const Icon(Icons.calendar_month_outlined),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('MMMM yyyy').format(month),
+              style: const TextStyle(
+                color: AppTheme.muted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(child: _reportMetric('Income', income, AppTheme.teal)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _reportMetric('Expense', expense, AppTheme.rose),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _reportMetric(
+                    'Entries',
+                    transactions.length.toDouble(),
+                    AppTheme.primary,
+                    isCount: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: _exportMonthlyReport,
+                icon: const Icon(Icons.ios_share_outlined),
+                label: const Text('Export PDF'),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _reportMetric(
+    String label,
+    double amount,
+    Color color, {
+    bool isCount = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            isCount ? amount.toStringAsFixed(0) : amount.toStringAsFixed(0),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: color, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _emptyState() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -183,9 +321,15 @@ class MoneyView extends StatelessWidget {
         children: [
           Icon(Icons.account_balance_wallet_outlined, size: 42),
           SizedBox(height: 10),
-          Text('No transactions yet', style: TextStyle(fontWeight: FontWeight.w900)),
+          Text(
+            'No transactions yet',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
           SizedBox(height: 4),
-          Text('Track income and expenses here.', style: TextStyle(color: AppTheme.muted)),
+          Text(
+            'Track income and expenses here.',
+            style: TextStyle(color: AppTheme.muted),
+          ),
         ],
       ),
     );
@@ -224,8 +368,16 @@ class MoneyView extends StatelessWidget {
               Obx(() {
                 return SegmentedButton<String>(
                   segments: const [
-                    ButtonSegment(value: 'income', label: Text('Income'), icon: Icon(Icons.south_west)),
-                    ButtonSegment(value: 'expense', label: Text('Expense'), icon: Icon(Icons.north_east)),
+                    ButtonSegment(
+                      value: 'income',
+                      label: Text('Income'),
+                      icon: Icon(Icons.south_west),
+                    ),
+                    ButtonSegment(
+                      value: 'expense',
+                      label: Text('Expense'),
+                      icon: Icon(Icons.north_east),
+                    ),
                   ],
                   selected: {type.value},
                   onSelectionChanged: (value) => type.value = value.first,
@@ -254,6 +406,41 @@ class MoneyView extends StatelessWidget {
       ),
       isScrollControlled: true,
     );
+  }
+
+  Future<void> _pickReportMonth(BuildContext context) async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: reportMonth.value,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: 'Choose report month',
+    );
+    if (selected == null) return;
+    reportMonth.value = DateTime(selected.year, selected.month);
+  }
+
+  Future<void> _exportMonthlyReport() async {
+    try {
+      await MonthlyReportService.shareMonthlyMoneyReport(
+        month: reportMonth.value,
+        transactions: controller.transactions.toList(),
+      );
+    } catch (_) {
+      Get.snackbar(
+        'Export failed',
+        'Could not create the monthly report PDF.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  List<TransactionModel> _transactionsForMonth(DateTime month) {
+    final start = DateTime(month.year, month.month);
+    final end = DateTime(month.year, month.month + 1);
+    return controller.transactions
+        .where((tx) => !tx.date.isBefore(start) && tx.date.isBefore(end))
+        .toList();
   }
 }
 
@@ -288,7 +475,7 @@ class _MoneyChartPainter extends CustomPainter {
             fontWeight: FontWeight.w700,
           ),
         ),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       )..layout();
       textPainter.paint(
         canvas,

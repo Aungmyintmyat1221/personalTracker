@@ -5,6 +5,7 @@ import '../controllers/RoutineController.dart';
 import '../controllers/TaskController.dart';
 import '../controllers/TransactionController.dart';
 import '../theme/app_theme.dart';
+import 'settingsView.dart';
 
 class DashboardView extends StatelessWidget {
   DashboardView({super.key});
@@ -53,41 +54,44 @@ class DashboardView extends StatelessWidget {
   }
 
   Widget _hero() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: premiumCard(color: AppTheme.ink),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Personal Tracker',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
+    return GestureDetector(
+      onLongPress: () => Get.to(() => const SettingsView()),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: premiumCard(color: AppTheme.ink),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Personal Tracker',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Focus, routines, money, and progress in one place.',
-                  style: TextStyle(color: Color(0xFFD1D5DB), height: 1.3),
-                ),
-              ],
+                  SizedBox(height: 8),
+                  Text(
+                    'Focus, routines, money, and progress in one place.',
+                    style: TextStyle(color: Color(0xFFD1D5DB), height: 1.3),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.insights, color: Colors.white),
             ),
-            child: const Icon(Icons.insights, color: Colors.white),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

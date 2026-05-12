@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:tracker/views/checklistView.dart';
+import 'package:tracker/views/aiView.dart';
 import 'package:tracker/views/routineView.dart';
 import 'package:tracker/views/taskView.dart';
 
 import 'dashboardView.dart';
 import 'moneyView.dart';
-
 
 class HomeView extends StatefulWidget {
   @override
@@ -19,8 +18,9 @@ class _HomeViewState extends State<HomeView> {
     DashboardView(),
     TasksView(),
     RoutineView(),
-    ChecklistView(),
     MoneyView(),
+    const AiView(),
+    // const SettingsView(),
   ];
 
   @override
@@ -30,7 +30,8 @@ class _HomeViewState extends State<HomeView> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         height: 72,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        onDestinationSelected: (index) =>
+            setState(() => _selectedIndex = index),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
@@ -48,15 +49,20 @@ class _HomeViewState extends State<HomeView> {
             label: "Routine",
           ),
           NavigationDestination(
-            icon: Icon(Icons.fact_check_outlined),
-            selectedIcon: Icon(Icons.fact_check),
-            label: "List",
-          ),
-          NavigationDestination(
             icon: Icon(Icons.account_balance_wallet_outlined),
             selectedIcon: Icon(Icons.account_balance_wallet),
             label: "Money",
           ),
+          NavigationDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome),
+            label: "AI",
+          ),
+          // NavigationDestination(
+          //   icon: Icon(Icons.settings_outlined),
+          //   selectedIcon: Icon(Icons.settings),
+          //   label: "Settings",
+          // ),
         ],
       ),
     );

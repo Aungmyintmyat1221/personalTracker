@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "tracker/native_alarm"
+    private val widgetChannelName = "tracker/android_widget"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -23,8 +24,12 @@ class MainActivity : FlutterActivity() {
                     val body = call.argument<String>("body") ?: ""
                     val triggerAtMillis = call.argument<Long>("triggerAtMillis")
                         ?: return@setMethodCallHandler result.error("BAD_TIME", "Missing trigger time", null)
+                    val hour = call.argument<Int>("hour") ?: 0
+                    val minute = call.argument<Int>("minute") ?: 0
+                    val scheduleType = call.argument<String>("scheduleType") ?: "everyday"
+                    val workdays = call.argument<List<Int>>("workdays") ?: listOf(1, 2, 3, 4, 5)
 
-                    scheduleRoutineAlarm(id, title, body, triggerAtMillis)
+                    scheduleRoutineAlarm(id, title, body, triggerAtMillis, hour, minute, scheduleType, workdays)
                     result.success(true)
                 }
                 "cancelRoutineAlarm" -> {
@@ -35,14 +40,49 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, widgetChannelName).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "updateTrackerWidget" -> {
+                    val balance = call.argument<Double>("balance") ?: 0.0
+                    val routineTitle = call.argument<String>("routineTitle") ?: "No routine left today"
+                    val routineTime = call.argument<String>("routineTime") ?: "All caught up"
+                    val taskTitle = call.argument<String>("taskTitle") ?: "No pending task"
+                    val taskPriority = call.argument<String>("taskPriority") ?: "Done"
+                    TrackerWidgetProvider.updateAll(
+                        this,
+                        balance,
+                        routineTitle,
+                        routineTime,
+                        taskTitle,
+                        taskPriority
+                    )
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
-    private fun scheduleRoutineAlarm(id: Int, title: String, body: String, triggerAtMillis: Long) {
+    private fun scheduleRoutineAlarm(
+        id: Int,
+        title: String,
+        body: String,
+        triggerAtMillis: Long,
+        hour: Int,
+        minute: Int,
+        scheduleType: String,
+        workdays: List<Int>
+    ) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, NativeAlarmReceiver::class.java).apply {
             putExtra("id", id)
             putExtra("title", title)
             putExtra("body", body)
+            putExtra("hour", hour)
+            putExtra("minute", minute)
+            putExtra("scheduleType", scheduleType)
+            putIntegerArrayListExtra("workdays", ArrayList(workdays))
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this,

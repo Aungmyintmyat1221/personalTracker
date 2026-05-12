@@ -6,18 +6,21 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:tracker/views/homeView.dart';
 import 'package:tracker/theme/app_theme.dart';
+import 'service/android_widget_service.dart';
 import 'models/routineModel.dart';
 import 'models/taskModel.dart';
 import 'models/transactionModel.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
 const AndroidNotificationChannel routineChannel = AndroidNotificationChannel(
-  'routine_channel',
-  'Routine Alerts',
-  description: 'Routine reminders',
-  importance: Importance.high,
+  'routine_alarm_channel_v2',
+  'Routine Alarms',
+  description: 'Routine alarm reminders',
+  importance: Importance.max,
+  playSound: true,
+  enableVibration: true,
 );
 
 void main() async {
@@ -38,38 +41,38 @@ void main() async {
   await Hive.openBox('checklist');
   await Hive.openBox('routine_history');
   await Hive.openBox('app_meta');
+  await AndroidWidgetService.updateTrackerWidget();
 
   // --- Local Notifications Init ---
   const AndroidInitializationSettings androidInit =
-  AndroidInitializationSettings('app_icon');
-  final InitializationSettings initSettings =
-  InitializationSettings(android: androidInit);
+      AndroidInitializationSettings('app_icon');
+  final InitializationSettings initSettings = InitializationSettings(
+    android: androidInit,
+  );
 
   await flutterLocalNotificationsPlugin.initialize(initSettings);
 
   // --- Request Notification Permission ---
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.requestNotificationsPermission();
   final androidPlugin = flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>();
+        AndroidFlutterLocalNotificationsPlugin
+      >();
   await androidPlugin?.requestNotificationsPermission();
   await androidPlugin?.requestExactAlarmsPermission(); //
 
-
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.createNotificationChannel(routineChannel);
 
   runApp(SelfDevApp());
 }
-
-
-
-
 
 class SelfDevApp extends StatelessWidget {
   @override

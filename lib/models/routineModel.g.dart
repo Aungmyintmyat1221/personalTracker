@@ -25,13 +25,14 @@ class RoutineModelAdapter extends TypeAdapter<RoutineModel> {
       streak: fields[5] as int,
       lastCompletedDate: fields[6] as DateTime?,
       priority: fields[7] as int,
+      scheduleType: fields[8] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, RoutineModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class RoutineModelAdapter extends TypeAdapter<RoutineModel> {
       ..writeByte(6)
       ..write(obj.lastCompletedDate)
       ..writeByte(7)
-      ..write(obj.priority);
+      ..write(obj.priority)
+      ..writeByte(8)
+      ..write(obj.scheduleType);
   }
 
   @override

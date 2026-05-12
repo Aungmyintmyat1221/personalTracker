@@ -8,12 +8,20 @@ class NativeAlarmService {
     required String title,
     required String body,
     required DateTime scheduledTime,
+    required int hour,
+    required int minute,
+    required String scheduleType,
+    required List<int> workdays,
   }) async {
     await _channel.invokeMethod('scheduleRoutineAlarm', {
       'id': id,
       'title': title,
       'body': body,
       'triggerAtMillis': scheduledTime.millisecondsSinceEpoch,
+      'hour': hour,
+      'minute': minute,
+      'scheduleType': scheduleType,
+      'workdays': workdays,
     });
   }
 
